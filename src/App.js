@@ -8,6 +8,7 @@ function App() {
   const [category, setCategory] = useState("Personnel");
   const [filter, setFilter] = useState("All");
   const [searchTerm, setSearchTerm] = useState("");
+  const [showSuggestions, setShowSuggestions] = useState(false);
 
   // Predefined list of task suggestions
   const taskSuggestions = [
@@ -38,7 +39,14 @@ function App() {
     if (newTask.trim() !== "") {
       setTasks([...tasks, { text: newTask, category, completed: false }]);
       setNewTask("");
+      setShowSuggestions(false);
     }
+  };
+
+  // Select a suggestion
+  const selectSuggestion = (suggestion) => {
+    setNewTask(suggestion);
+    setShowSuggestions(false);
   };
 
   // Toggle task completion
@@ -49,16 +57,26 @@ function App() {
     setTasks(updatedTasks);
   };
 
-  // Delete a task
+  // Delete a task with confirmation
   const deleteTask = (index) => {
-    const updatedTasks = tasks.filter((_, i) => i !== index);
-    setTasks(updatedTasks);
+    if (window.confirm("Êtes-vous sûr de vouloir supprimer cette tâche ?")) {
+      const updatedTasks = tasks.filter((_, i) => i !== index);
+      setTasks(updatedTasks);
+    }
   };
 
-  // Clear completed tasks
+  // Clear completed tasks with confirmation
   const clearCompletedTasks = () => {
-    const updatedTasks = tasks.filter((task) => !task.completed);
-    setTasks(updatedTasks);
+    const completedCount = tasks.filter(task => task.completed).length;
+    if (completedCount === 0) {
+      alert("Il n'y a pas de tâches terminées à supprimer.");
+      return;
+    }
+    
+    if (window.confirm(`Êtes-vous sûr de vouloir supprimer ${completedCount} tâche(s) terminée(s) ?`)) {
+      const updatedTasks = tasks.filter((task) => !task.completed);
+      setTasks(updatedTasks);
+    }
   };
 
   // Filter tasks by name and search term
@@ -80,12 +98,20 @@ function App() {
             type="text"
             placeholder="Ajouter une tâche..."
             value={newTask}
-            onChange={(e) => setNewTask(e.target.value)}
+            onChange={(e) => {
+              setNewTask(e.target.value);
+              setShowSuggestions(true);
+            }}
+            onFocus={() => setShowSuggestions(true)}
           />
-          {newTask && filteredSuggestions.length > 0 && (
+          {newTask && showSuggestions && filteredSuggestions.length > 0 && (
             <div className="suggestions">
               {filteredSuggestions.map((suggestion, index) => (
-                <div key={index} className="suggestion-item" onClick={() => setNewTask(suggestion)}>
+                <div 
+                  key={index} 
+                  className="suggestion-item" 
+                  onClick={() => selectSuggestion(suggestion)}
+                >
                   {suggestion}
                 </div>
               ))}
